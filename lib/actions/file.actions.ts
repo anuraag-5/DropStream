@@ -6,6 +6,7 @@ import { appwriteConfig } from "../appwrite/config";
 import { InputFile } from "node-appwrite/file"
 import { constructFileUrl, getFileType, parseStringify } from "../utils";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "./user.actions";
 
 const handleError = (error: unknown, message: string) => {
     console.log(error, message);
@@ -43,5 +44,16 @@ export const fileUpload = async ({ file, ownerId, accountId, path }: UploadFileP
 
     } catch (error) {
         handleError(error,"Failed to upload file.");
+    }
+}
+
+export const getFiles = async () => {
+    const { databases } = await createAdminClient();
+
+    try {
+        const currentUser = await getCurrentUser();
+        if(!currentUser) throw new Error("User not found");
+    } catch (error) {
+        handleError(error,"Unable to get all of your files at the moment.");
     }
 }
