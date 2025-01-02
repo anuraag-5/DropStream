@@ -24,7 +24,7 @@ const Card = ({ file }: { file: Models.Document }) => {
       </div>
 
       <div className="file-card-details break-words">
-        <p className="subtitle-2 line-clamp-1">{file.name}</p>
+        <p className="subtitle-2 line-clamp-1 capitalize">{file.name}</p>
         <FormattedDateTime date={file.$createdAt} className="body-2 text-light-100"/>
         <p className=" caption line-clamp-1 text-light-200">
           By: {file.owner.fullName}
