@@ -1,6 +1,12 @@
 "use client";
 
-import { Dialog } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,11 +22,79 @@ import Link from "next/link";
 
 import { Models } from "node-appwrite";
 import { useState } from "react";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { usePathname } from "next/navigation";
+import { renameFile } from "@/lib/actions/file.actions";
 
 const ActionDropdown = ({ file }: { file: Models.Document }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [action, setAction] = useState<ActionType | null>(null);
+  const [ name, setName ] = useState(file.name);
+  const [ isLoading, setIsLoading ] = useState(false);
+  const path = usePathname();
+
+  const closeAllModals = (name: string) => {
+    setIsDropdownOpen(false);
+    setIsModalOpen(false);
+    setAction(null);
+    setName(name);
+    // setEmails([])
+  }
+
+  const handleAction = async () => {
+    if(!action)return;
+
+    setIsLoading(true);
+    let success;
+
+    const actions = {
+      rename: () => renameFile({fileId: file.$id, name, extension: file.extension, path}),
+      share: () => console.log("Share"),
+      delete: () => console.log("Delete")
+    }
+
+    success = await actions[action.value as keyof typeof actions]();
+    if(success) closeAllModals(success.name);
+    setIsLoading(false);
+  }
+
+  const renderDialogContent = () => {
+    if(!action)return null;
+    const { label, value } = action;
+    return (
+      <DialogContent className="shad-dialog button">
+        <DialogHeader className="flex flex-col gap-3">
+          <DialogTitle className="text-center text-light-100">{label}</DialogTitle>
+          { value === 'rename' && (
+            <Input 
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            />
+          )}
+        </DialogHeader>
+        {['rename','delete','share'].includes(value) && (
+          <DialogFooter className="flex flex-col gap-3 md:flex-row">
+            <Button onClick={() => closeAllModals(file.name)} className="modal-cancel-button">Cancel</Button>
+            <Button onClick={handleAction} className="modal-submit-button">
+              <p className="capitalize">{value}</p>
+              {isLoading && (
+                <Image 
+                src="/assets/icons/loader.svg"
+                alt="Loader"
+                width={24}
+                height={24}
+                className="animate-spin"
+                />
+              )}
+            </Button>
+          </DialogFooter>
+        )}
+      </DialogContent>
+    );
+  };
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
@@ -81,6 +155,7 @@ const ActionDropdown = ({ file }: { file: Models.Document }) => {
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+      {renderDialogContent()}
     </Dialog>
   );
 };
