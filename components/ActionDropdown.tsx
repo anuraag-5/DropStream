@@ -25,10 +25,16 @@ import { useState } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
-import { renameFile, UpdateFileUsers } from "@/lib/actions/file.actions";
+import { deleteFile, renameFile, UpdateFileUsers } from "@/lib/actions/file.actions";
 import FileDetails, { ShareInput } from "./ActionsModalContent";
 
-const ActionDropdown = ({ file }: { file: Models.Document }) => {
+const ActionDropdown = ({
+  file,
+  user,
+}: {
+  file: Models.Document;
+  user: Models.Document | null;
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [action, setAction] = useState<ActionType | null>(null);
@@ -55,7 +61,7 @@ const ActionDropdown = ({ file }: { file: Models.Document }) => {
       rename: () =>
         renameFile({ fileId: file.$id, name, extension: file.extension, path }),
       share: () => UpdateFileUsers({ fileId: file.$id, emails, path }),
-      delete: () => console.log("Delete"),
+      delete: () => deleteFile({ fileId: file.$id, path, bucketFileId: file.bucketFileId })
     };
 
     success = await actions[action.value as keyof typeof actions]();
@@ -95,27 +101,57 @@ const ActionDropdown = ({ file }: { file: Models.Document }) => {
               onRemove={handleRemoveUsers}
             />
           )}
+          {value === "delete" && (
+            <p className="delete-confirmation">
+              Are you sure you want to delete ?{" "}
+              <span className="delete-file-name">{file.name}?</span>
+            </p>
+          )}
         </DialogHeader>
-        {["rename", "delete", "share"].includes(value) && (
-          <DialogFooter className="flex flex-col gap-3 md:flex-row">
-            <Button
-              onClick={() => closeAllModals(file.name)}
-              className="modal-cancel-button"
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleAction} className="modal-submit-button">
-              <p className="capitalize">{value}</p>
-              {isLoading && (
-                <Image
-                  src="/assets/icons/loader.svg"
-                  alt="Loader"
-                  width={24}
-                  height={24}
-                  className="animate-spin"
-                />
-              )}
-            </Button>
+        {user?.$id === file.owner.$id ? (
+          ["rename", "delete", "share"].includes(value) && (
+            <DialogFooter className="flex flex-col gap-3 md:flex-row">
+              <Button
+                onClick={() => closeAllModals(file.name)}
+                className="modal-cancel-button"
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleAction} className="modal-submit-button">
+                <p className="capitalize">{value}</p>
+                {isLoading && (
+                  <Image
+                    src="/assets/icons/loader.svg"
+                    alt="Loader"
+                    width={24}
+                    height={24}
+                    className="animate-spin"
+                  />
+                )}
+              </Button>
+            </DialogFooter>
+          )
+        ) : (
+          <DialogFooter className="flex flex-col gap-3">
+            {value !== "details" ? (
+              <Button
+                onClick={() => closeAllModals(file.name)}
+                className="modal-submit-button"
+              >
+                <p className="caption">You cannot {value} this file</p>
+                {isLoading && (
+                  <Image
+                    src="/assets/icons/loader.svg"
+                    alt="Loader"
+                    width={24}
+                    height={24}
+                    className="animate-spin"
+                  />
+                )}
+              </Button>
+            ) : (
+              <p></p>
+            )}
           </DialogFooter>
         )}
       </DialogContent>

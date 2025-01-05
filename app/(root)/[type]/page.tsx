@@ -62,25 +62,33 @@
 import Card from "@/components/Card";
 import Sort from "@/components/Sort";
 import { getFiles } from "@/lib/actions/file.actions";
+import { getFileTypesParams } from "@/lib/utils";
 import Image from "next/image";
 import { Models } from "node-appwrite";
 import { useEffect, useState } from "react";
 
-const Page = ({ params }: SearchParamProps) => {
+const Page = ({ searchParams, params }: SearchParamProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [files, setFiles] = useState<{
     documents: Models.Document[];
     total: number;
   } | null>(null);
   const [type, setType] = useState<string>("");
+  const [ searchText, setSearchText ] = useState("");
+  const [ sort, setSort ] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
-      const fetchedFiles = await getFiles();
       const fetchedType = ((await params)?.type as string) || "";
+      const types = getFileTypesParams(fetchedType) as FileType[];
+      const fetchSearchText = ((await searchParams)?.query as string) || "";
+      const fetchSort = ((await searchParams)?.sort as string) || "";
+      const fetchedFiles = await getFiles({ types, searchText: fetchSearchText, sort: fetchSort });
 
       setFiles(fetchedFiles);
       setType(fetchedType);
+      setSearchText(fetchSearchText);
+      setSort(fetchSort);
     };
 
     fetchData().then(() => setIsLoading(false));
