@@ -25,15 +25,16 @@ import { useState } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
-import { renameFile } from "@/lib/actions/file.actions";
-import FileDetails from "./ActionsModalContent";
+import { renameFile, UpdateFileUsers } from "@/lib/actions/file.actions";
+import FileDetails, { ShareInput } from "./ActionsModalContent";
 
 const ActionDropdown = ({ file }: { file: Models.Document }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [action, setAction] = useState<ActionType | null>(null);
-  const [ name, setName ] = useState(file.name);
-  const [ isLoading, setIsLoading ] = useState(false);
+  const [name, setName] = useState(file.name);
+  const [isLoading, setIsLoading] = useState(false);
+  const [emails, setEmails] = useState<string[]>([]);
   const path = usePathname();
 
   const closeAllModals = (name: string) => {
@@ -42,57 +43,76 @@ const ActionDropdown = ({ file }: { file: Models.Document }) => {
     setAction(null);
     setName(name);
     // setEmails([])
-  }
+  };
 
   const handleAction = async () => {
-    if(!action)return;
+    if (!action) return;
 
     setIsLoading(true);
     let success;
 
     const actions = {
-      rename: () => renameFile({fileId: file.$id, name, extension: file.extension, path}),
-      share: () => console.log("Share"),
-      delete: () => console.log("Delete")
-    }
+      rename: () =>
+        renameFile({ fileId: file.$id, name, extension: file.extension, path }),
+      share: () => UpdateFileUsers({ fileId: file.$id, emails, path }),
+      delete: () => console.log("Delete"),
+    };
 
     success = await actions[action.value as keyof typeof actions]();
-    if(success) closeAllModals(success.name);
+    if (success) closeAllModals(success.name);
     setIsLoading(false);
-  }
+  };
+
+  const handleRemoveUsers = async (email: string) => {
+    const UpdatedEmails = emails.filter((emailuser) => emailuser != email);
+
+    const success = await UpdateFileUsers({ fileId: file.$id, emails, path });
+    if (success) setEmails(UpdatedEmails);
+    closeAllModals(success.name);
+  };
 
   const renderDialogContent = () => {
-    if(!action)return null;
+    if (!action) return null;
     const { label, value } = action;
     return (
       <DialogContent className="shad-dialog button">
         <DialogHeader className="flex flex-col gap-3">
-          <DialogTitle className="text-center text-light-100">{label}</DialogTitle>
-          { value === 'rename' && (
-            <Input 
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+          <DialogTitle className="text-center text-light-100">
+            {label}
+          </DialogTitle>
+          {value === "rename" && (
+            <Input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
           )}
-          { value === 'details' && (
-            <FileDetails 
-            file={file}
+          {value === "details" && <FileDetails file={file} />}
+          {value === "share" && (
+            <ShareInput
+              file={file}
+              onInputChange={setEmails}
+              onRemove={handleRemoveUsers}
             />
           )}
         </DialogHeader>
-        {['rename','delete','share'].includes(value) && (
+        {["rename", "delete", "share"].includes(value) && (
           <DialogFooter className="flex flex-col gap-3 md:flex-row">
-            <Button onClick={() => closeAllModals(file.name)} className="modal-cancel-button">Cancel</Button>
+            <Button
+              onClick={() => closeAllModals(file.name)}
+              className="modal-cancel-button"
+            >
+              Cancel
+            </Button>
             <Button onClick={handleAction} className="modal-submit-button">
               <p className="capitalize">{value}</p>
               {isLoading && (
-                <Image 
-                src="/assets/icons/loader.svg"
-                alt="Loader"
-                width={24}
-                height={24}
-                className="animate-spin"
+                <Image
+                  src="/assets/icons/loader.svg"
+                  alt="Loader"
+                  width={24}
+                  height={24}
+                  className="animate-spin"
                 />
               )}
             </Button>
