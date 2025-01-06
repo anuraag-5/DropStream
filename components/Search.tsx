@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useDebounce } from "use-debounce"
 import { Input } from "./ui/input";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -17,20 +18,21 @@ const Search = () => {
   const searchQuery = searchParams.get("query") || "";
   const router = useRouter();
   const path = usePathname();
+  const [ debouncedQuery ] = useDebounce(query,400);
 
   useEffect(() => {
     const fetchFile = async () => {
-      if(!query) {
+      if(debouncedQuery.length === 0) {
         setResults([]);
         setOpen(false);
         return router.push(path.replace(searchParams.toString(),""));
       }
-      const files = await getFiles({ searchText: query ,types: []});
+      const files = await getFiles({ searchText: debouncedQuery ,types: []});
       setResults(files.documents);
       setOpen(true);
     };
     fetchFile();
-  }, [query]);
+  }, [debouncedQuery]);
 
   useEffect(() => {
     if (!searchQuery) setQuery("");
