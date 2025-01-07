@@ -121,9 +121,9 @@ const Page = ({ searchParams, params }: SearchParamProps) => {
 
           <div className="sort-container">
             <p className="body-1 hidden sm:block text-light-200">
-              Sort by: Sort
+              Sort by: 
             </p>
-            {/* <Sort /> */}
+            <Sort />
           </div>
         </div>
       </section>

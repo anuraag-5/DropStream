@@ -8,4 +8,4 @@ const FormattedDateTime = ({ date, className }:{ date: string, className?: strin
   )
 }
 
-export default FormattedDateTime
+export default FormattedDateTime;
