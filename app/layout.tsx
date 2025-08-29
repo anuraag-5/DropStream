@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/toaster"
 import { Poppins } from 'next/font/google'
 import "./globals.css";
+import Script from "next/script";
 
 
 const poppins = Poppins({
@@ -27,6 +28,7 @@ export default function RootLayout({
       >
         {children}
         <Toaster />
+        <Script src="http://localhost:3001/api/snippet" strategy="afterInteractive" />
       </body>
     </html>
   );
