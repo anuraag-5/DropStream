@@ -28,7 +28,7 @@ export default function RootLayout({
       >
         {children}
         <Toaster />
-        <Script src="http://localhost:3001/api/snippet" strategy="afterInteractive" />
+        <Script src="https://api.nexus.speeedops.com/api/snippet" strategy="afterInteractive" />
       </body>
     </html>
   );
